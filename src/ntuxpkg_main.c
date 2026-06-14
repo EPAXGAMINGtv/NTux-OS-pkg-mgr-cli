@@ -7,7 +7,7 @@
 
 #define HTTP_BUF 65536
 #define DB_PATH "/etc/pkg/packages.json"
-#define INSTALL_PREFIX "/usr/bin"
+#define INSTALL_PREFIX "/fat0/"
 #define DEF_SERVER "http://5.231.46.3:28700"
 
 static int key_edge(uint8_t sc, uint8_t* last) {
