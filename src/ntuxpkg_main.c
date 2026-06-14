@@ -8,7 +8,7 @@
 #define HTTP_BUF 65536
 #define DB_PATH "/etc/pkg/packages.json"
 #define INSTALL_PREFIX "/usr/bin"
-#define DEF_SERVER "http://10.0.2.2:8080"
+#define DEF_SERVER "http://5.231.46.3:28700"
 
 static int key_edge(uint8_t sc, uint8_t* last) {
     int now = (sys_kbd_is_pressed(sc) > 0) ? 1 : 0;
