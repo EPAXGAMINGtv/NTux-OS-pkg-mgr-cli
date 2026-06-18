@@ -2,6 +2,7 @@
 #define USER_SYSCALL_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,7 +76,9 @@ enum {
     INT80_DIALOG_PUSH = 115,
     INT80_MODULE_LIST = 116,
     INT80_GET_GPU_INFO = 117,
-    INT80_GET_GPU_STATS = 118
+    INT80_GET_GPU_STATS = 118,
+    INT80_UMALLOC = 150,
+    INT80_UFREE = 151
 };
 
 long ntux_syscall3(uint64_t nr, uint64_t a0, uint64_t a1, uint64_t a2);
@@ -268,6 +271,8 @@ long sys_get_cpu_info(ntux_cpu_info_t* out);
 long sys_get_cpu_brand(char* out, uint64_t cap);
 long sys_dialog_pop(char* out, uint64_t cap, uint32_t* out_code);
 long sys_dialog_push(int tid, uint32_t code, const char* text);
+void *sys_umalloc(size_t size);
+void sys_ufree(void *ptr);
 
 #ifdef __cplusplus
 }

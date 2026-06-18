@@ -1,4 +1,5 @@
 #include <syscall.h>
+#include <stddef.h>
 
 long ntux_syscall3(uint64_t nr, uint64_t a0, uint64_t a1, uint64_t a2) {
     uint64_t ret;
@@ -295,6 +296,14 @@ long sys_dialog_pop(char* out, uint64_t cap, uint32_t* out_code) {
 
 long sys_dialog_push(int tid, uint32_t code, const char* text) {
     return ntux_syscall3(INT80_DIALOG_PUSH, (uint64_t)tid, (uint64_t)code, (uint64_t)(uintptr_t)text);
+}
+
+void *sys_umalloc(size_t size) {
+    return (void *)(uintptr_t)ntux_syscall3(INT80_UMALLOC, (uint64_t)size, 0, 0);
+}
+
+void sys_ufree(void *ptr) {
+    ntux_syscall3(INT80_UFREE, (uint64_t)(uintptr_t)ptr, 0, 0);
 }
 
 

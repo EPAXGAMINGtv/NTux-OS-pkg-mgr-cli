@@ -32,7 +32,16 @@ void *malloc(size_t size) {
     blk_t *cur = g_free;
     while (cur) {
         if (cur->size >= size) {
-            *prev = cur->next;
+            size_t remaining = cur->size - size;
+            if (remaining >= sizeof(blk_t) + 8u) {
+                blk_t *split = (blk_t *)((uint8_t *)(cur + 1) + size);
+                split->size = remaining - sizeof(blk_t);
+                split->next = cur->next;
+                *prev = split;
+                cur->size = size;
+            } else {
+                *prev = cur->next;
+            }
             return (void *)(cur + 1);
         }
         prev = &cur->next;
@@ -41,19 +50,45 @@ void *malloc(size_t size) {
 
     size_t off = align8(g_heap_break);
     size_t need = off + sizeof(blk_t) + size;
-    if (need > USER_HEAP_BYTES) return 0;
+    if (need <= USER_HEAP_BYTES) {
+        blk_t *b = (blk_t *)(void *)(g_heap + off);
+        b->size = size;
+        g_heap_break = need;
+        return (void *)(b + 1);
+    }
 
-    blk_t *b = (blk_t *)(void *)(g_heap + off);
-    b->size = size;
-    g_heap_break = need;
-    return (void *)(b + 1);
+    return sys_umalloc(size);
 }
 
 void free(void *ptr) {
     if (!ptr) return;
-    blk_t *b = (blk_t *)ptr - 1;
-    b->next = g_free;
-    g_free = b;
+
+    if ((uint8_t *)ptr >= g_heap && (uint8_t *)ptr < g_heap + USER_HEAP_BYTES) {
+        blk_t *block = (blk_t *)ptr - 1;
+
+        blk_t **prev = &g_free;
+        while (*prev && *prev < block)
+            prev = &(*prev)->next;
+
+        block->next = *prev;
+        *prev = block;
+
+        if (block->next && (uint8_t *)(block + 1) + block->size == (uint8_t *)block->next) {
+            block->size += sizeof(blk_t) + block->next->size;
+            block->next = block->next->next;
+        }
+
+        if (prev != &g_free) {
+            blk_t *p = g_free;
+            while (p && p->next != block) p = p->next;
+            if (p && (uint8_t *)(p + 1) + p->size == (uint8_t *)block) {
+                p->size += sizeof(blk_t) + block->size;
+                p->next = block->next;
+            }
+        }
+    } else {
+        sys_ufree(ptr);
+    }
 }
 
 void *calloc(size_t nmemb, size_t size) {
